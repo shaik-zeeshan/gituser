@@ -2,7 +2,7 @@
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { $ } from "bun";
+import { $, argv } from "bun";
 
 const file_path = import.meta.dir + "/users.json";
 
@@ -33,6 +33,28 @@ yargs(hideBin(process.argv))
       }
 
       await $`git clone --config user.name=${user.username} --config user.email=${user.email} ${argv.url} ${argv.args}`;
+    },
+  )
+  .command(
+    "set <type>",
+    "set a user in current dir",
+    (yargs) =>
+      yargs.positional("type", {
+        type: "string",
+      }),
+    async (argv) => {
+      const userData = Bun.file(file_path);
+      const users: User[] = JSON.parse(await userData.text());
+
+      const user = users.find((user) => user.type === argv.type);
+
+      if (!user) {
+        console.log("User not found");
+        return;
+      }
+
+      await $`git config user.name ${user.username}`;
+      await $`git config user.email ${user.email}`;
     },
   )
   .command(
